@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException, Query, Depends
-from redis.asyncio import Redis
 from app.services.weather_service import get_weather
 from typing import Any, Dict
 from .utils.redis_client import redis_client

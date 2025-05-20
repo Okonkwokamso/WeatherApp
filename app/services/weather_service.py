@@ -2,7 +2,7 @@ import httpx
 import os
 from dotenv import load_dotenv
 import json
-import redis.asyncio.client as Redis
+from upstash_redis import Redis
 from typing import Any, Dict
 
 load_dotenv()
