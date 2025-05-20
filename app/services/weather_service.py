@@ -13,7 +13,7 @@ print(f"API_KEY: {API_KEY}")
 async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
   cache_key = f"weather:{city.lower()}"
 
-  cached_data: str | None = await redis.get(cache_key)
+  cached_data: str | None = redis.get(cache_key)
 
   if cached_data:
     return json.loads(cached_data)
@@ -28,7 +28,7 @@ async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
     response.raise_for_status()
     weather_data: Dict[str, Any] =  response.json()
 
-  await redis.set(cache_key, json.dumps(weather_data), ex=600)
+  redis.set(cache_key, json.dumps(weather_data), ex=600)
 
   print(f"Weather data for {city}:", weather_data)
 
