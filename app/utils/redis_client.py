@@ -13,4 +13,4 @@ print(f"REDIS_URL: {redis_url}")
 
 # redis_client: Redis = Redis.from_url(REDIS_URL, decode_responses=True)
 
-redis_client = Redis(url="redis_url", token="redis_token")
+redis_client = Redis(url=redis_url, token=redis_token)
