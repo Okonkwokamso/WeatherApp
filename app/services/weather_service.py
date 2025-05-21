@@ -42,9 +42,21 @@ async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
       response.raise_for_status()
       weather_data: Dict[str, Any] =  response.json()
 
-      values = weather_data.get("data", {}).get("values")
-      if not values:
-        raise HTTPException(status_code=404, detail=f"No weather data found for '{city}'")
+      if (
+          "data" not in weather_data or
+          "values" not in weather_data["data"] or
+          not weather_data["data"]["values"]
+      ):
+          raise HTTPException(status_code=404, detail=f"No weather data found for '{city}'")
+      
+
+      resolved_location = weather_data["data"].get("location", "").lower()
+      if resolved_location and city.lower() not in resolved_location:
+        raise HTTPException(
+        status_code=404,
+        detail=f"No weather data found for '{city}'. Closest match: '{resolved_location}'"
+        )
+
 
       # redis.set(cache_key, json.dumps(weather_data), ex=CACHE_TTL)
 
