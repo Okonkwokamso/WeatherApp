@@ -50,7 +50,8 @@ async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
           raise HTTPException(status_code=404, detail=f"No weather data found for '{city}'")
       
 
-      resolved_location = weather_data["data"].get("location", "").lower()
+      resolved_location = weather_data["data"]["values"]["location"]
+      print(f"Resolved location: {resolved_location}")
       if resolved_location and city.lower() not in resolved_location:
         raise HTTPException(
         status_code=404,
