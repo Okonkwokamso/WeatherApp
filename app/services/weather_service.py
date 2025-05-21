@@ -12,7 +12,35 @@ API_KEY: str = os.getenv("TOMORROW_API_KEY", "")
 CACHE_TTL = 3600
 print(f"API_KEY: {API_KEY}")
 
+
+async def validate_city_with_geocoding(city: str) -> bool:
+  """Returns True if city is valid, else False."""
+  url = "https://nominatim.openstreetmap.org/search?<params>"
+  params = {
+    "q": city,
+    "format": "json",
+    "addressdetails": 1,
+    "limit": 1
+  }
+  headers = {
+    "User-Agent": "WeatherApp/1.0"
+  }
+  async with httpx.AsyncClient(timeout=10.0) as client:
+    response = await client.get(url, params=params, headers=headers)
+    response.raise_for_status()
+    data = response.json()
+
+    print(f"Geocoding data for {city}:", data)
+    # If data is not empty and type is city/town/village, it's valid
+    if data and data[0].get("type") in {"city", "town", "village"}:
+      return True
+    return False
+  
+
 async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
+  is_valid_city = await validate_city_with_geocoding(city)
+  if not is_valid_city:
+    raise HTTPException(status_code=404, detail=f"Invalid city name: '{city}'")
 
   cache_key = f"weather:{city.lower()}"
 
@@ -48,16 +76,6 @@ async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
           not weather_data["data"]["values"]
       ):
           raise HTTPException(status_code=404, detail=f"No weather data found for '{city}'")
-      
-
-      resolved_location = weather_data["data"]["values"]["location"]
-      print(f"Resolved location: {resolved_location}")
-      if resolved_location and city.lower() not in resolved_location:
-        raise HTTPException(
-        status_code=404,
-        detail=f"No weather data found for '{city}'. Closest match: '{resolved_location}'"
-        )
-
 
       # redis.set(cache_key, json.dumps(weather_data), ex=CACHE_TTL)
 
@@ -74,11 +92,5 @@ async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
   except httpx.HTTPStatusError as exc:
     print(f'API error: {exc.response.status_code} - {exc.response.text}')
     raise HTTPException(status_code=exc.response.status_code, detail="Error fetching weather data")
-
-
-
-
-
-
 
   return weather_data
