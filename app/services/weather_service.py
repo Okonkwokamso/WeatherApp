@@ -37,10 +37,16 @@ async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
   )
 
   try:
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
       response = await client.get(url, params=params, headers=headers)
       response.raise_for_status()
       weather_data: Dict[str, Any] =  response.json()
+
+      values = weather_data.get("data", {}).get("values")
+      if not values:
+        raise HTTPException(status_code=404, detail=f"No weather data found for '{city}'")
+
+      # redis.set(cache_key, json.dumps(weather_data), ex=CACHE_TTL)
 
       redis.set(cache_key, json.dumps(weather_data), ex=CACHE_TTL)
 
