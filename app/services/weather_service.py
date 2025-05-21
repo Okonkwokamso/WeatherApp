@@ -31,18 +31,20 @@ async def validate_city_with_geocoding(city: str) -> bool:
     data = response.json()
 
     print(f"Geocoding data for {city}:", data)
-    # If data is not empty and type is city/town/village, it's valid
-    if data and data[0].get("type") in {"city", "town", "village"}:
+
+    valid_types = {"city", "town", "village", "hamlet", "suburb", "state", "country"}
+    
+    if data and data[0].get("type") in valid_types:
       return True
     return False
   
 
-async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
-  is_valid_city = await validate_city_with_geocoding(city)
+async def get_weather(location: str, redis: Redis) -> Dict[str, Any]:
+  is_valid_city = await validate_city_with_geocoding(location)
   if not is_valid_city:
-    raise HTTPException(status_code=404, detail=f"Invalid city name: '{city}'")
+    raise HTTPException(status_code=404, detail=f"Invalid city name: '{location}'")
 
-  cache_key = f"weather:{city.lower()}"
+  cache_key = f"weather:{location.lower()}"
 
   cached_data: str | None = redis.get(cache_key)
 
@@ -50,7 +52,7 @@ async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
     return httpx.Response(200, content=cached_data).json()
   
   params = {
-    "location": city,
+    "location": location,
     "units": "metric"
   }
 
@@ -61,7 +63,7 @@ async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
   
   url = (
     f"https://api.tomorrow.io/v4/weather/realtime"
-    f"?location={city}&apikey={API_KEY}"
+    f"?location={location}&apikey={API_KEY}"
   )
 
   try:
@@ -75,13 +77,13 @@ async def get_weather(city: str, redis: Redis) -> Dict[str, Any]:
           "values" not in weather_data["data"] or
           not weather_data["data"]["values"]
       ):
-          raise HTTPException(status_code=404, detail=f"No weather data found for '{city}'")
+          raise HTTPException(status_code=404, detail=f"No weather data found for '{location}'")
 
       # redis.set(cache_key, json.dumps(weather_data), ex=CACHE_TTL)
 
       redis.set(cache_key, json.dumps(weather_data), ex=CACHE_TTL)
 
-      print(f"Weather data for {city}:", weather_data)
+      print(f"Weather data for {location}:", weather_data)
 
       return weather_data
 

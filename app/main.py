@@ -9,17 +9,17 @@ app = FastAPI(title="Weather API")
 #   return redis_client
 
 @app.get("/weather/")
-async def weather(city: str = Query(..., min_length=2)):
+async def weather(location: str = Query(..., min_length=2)):
 
   try:
-    weather_data = await get_weather(city, redis_client)
+    weather_data = await get_weather(location, redis_client)
 
     # return {
     #   "location": city,
     #   "data": weather_data.get("data", {})
     # }
     return {
-      "city": city,
+      "location": location,
       "temperature": weather_data["data"]["values"]["temperature"],
       "humidity": weather_data["data"]["values"]["humidity"],
       "wind_speed": weather_data["data"]["values"]["windSpeed"],
