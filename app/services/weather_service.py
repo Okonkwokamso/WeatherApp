@@ -13,11 +13,11 @@ CACHE_TTL = 3600
 print(f"API_KEY: {API_KEY}")
 
 
-async def validate_city_with_geocoding(city: str) -> bool:
-  """Returns True if city is valid, else False."""
+async def validate_city_with_geocoding(location: str) -> bool:
+ 
   url = "https://nominatim.openstreetmap.org/search?<params>"
   params = {
-    "q": city,
+    "q": location,
     "format": "json",
     "addressdetails": 1,
     "limit": 1
@@ -30,19 +30,22 @@ async def validate_city_with_geocoding(city: str) -> bool:
     response.raise_for_status()
     data = response.json()
 
-    print(f"Geocoding data for {city}:", data)
+    print(f"Geocoding data for {location}:", data)
 
-    valid_types = {"city", "town", "village", "hamlet", "suburb", "state", "country"}
+    valid_types = {"city", "town", "village", "hamlet", "suburb", "state", "country", "administrative", "province", "region", "island", "territory", "county", "municipality"}
     
-    if data and data[0].get("type") in valid_types:
-      return True
+    if data:
+      place_type = data[0].get("type", "")
+      address_type = data[0].get("addresstype", "")
+      if place_type in valid_types or address_type in valid_types:
+        return True
     return False
   
 
 async def get_weather(location: str, redis: Redis) -> Dict[str, Any]:
   is_valid_city = await validate_city_with_geocoding(location)
   if not is_valid_city:
-    raise HTTPException(status_code=404, detail=f"Invalid city name: '{location}'")
+    raise HTTPException(status_code=404, detail=f"Invalid location: '{location}'")
 
   cache_key = f"weather:{location.lower()}"
 
