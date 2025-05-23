@@ -52,6 +52,7 @@ async def get_weather(location: str, redis: Redis) -> Dict[str, Any]:
   cached_data: str | None = redis.get(cache_key)
 
   if cached_data:
+    print(f"Cache hit for {location}: {cached_data}")
     return httpx.Response(200, content=cached_data).json()
   
   params = {
