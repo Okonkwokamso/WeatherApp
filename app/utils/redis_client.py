@@ -1,4 +1,3 @@
-#from redis.asyncio import Redis 
 from upstash_redis import Redis
 import os
 from dotenv import load_dotenv
@@ -10,7 +9,5 @@ redis_token: str = os.getenv("REDIS_TOKEN")
 print(f"REDIS_TOKEN: {redis_token}")
 
 print(f"REDIS_URL: {redis_url}")
-
-# redis_client: Redis = Redis.from_url(REDIS_URL, decode_responses=True)
 
 redis_client = Redis(url=redis_url, token=redis_token)

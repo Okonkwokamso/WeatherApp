@@ -44,17 +44,16 @@ async def validate_city_with_geocoding(location: str) -> bool:
 
 def format_weather_response(location: str, weather_data: dict) -> dict:
   values = weather_data["data"]["values"]
-  advice = []
+  tip = []
 
-  # Example derived advice
   if values.get("rainIntensity", 0) > 0:
-    advice.append("You might want to grab that umbrella just incase ☔")
+    tip.append("You might want to grab that umbrella just incase ☔")
   if values.get("temperature", 0) > 35:
-    advice.append("Drink water, Stay sharp 😎")
+    tip.append("Drink water, Stay sharp 😎")
   if values.get("temperature", 0) < 10:
-    advice.append("Dress warmly or you'll get cold 🥶")
+    tip.append("Dress warmly or you'll get cold 🥶")
   if values.get("windSpeed", 0) > 10:
-    advice.append("It's windy, please don't get blown away 🌬️")
+    tip.append("It's windy, please don't get blown away 🌬️")
 
   return {
     "location": location,
@@ -62,7 +61,7 @@ def format_weather_response(location: str, weather_data: dict) -> dict:
     "humidity": values.get("humidity"),
     "wind_speed": values.get("windSpeed"),
     "rain_intensity": values.get("rainIntensity"),
-    "advice": advice or ["No special advice."]
+    "Tip": tip or ["No special tip."]
   }
 
 async def get_weather(location: str, redis: Redis) -> Dict[str, Any]:

@@ -5,11 +5,8 @@ from .utils.redis_client import redis_client
 
 app = FastAPI(title="Weather API")
 
-# def get_redis_client() -> Redis:
-#   return redis_client
-
 @app.get("/")
-async def root():
+async def welcome():
   return {
     "message": "Welcome to your weather buddy",
     "status": "success",
@@ -24,13 +21,6 @@ async def weather(location: str = Query(..., min_length=2)):
 
     return weather_data
 
-    # return {
-    #   "location": location,
-    #   "temperature": weather_data["data"]["values"]["temperature"],
-    #   "humidity": weather_data["data"]["values"]["humidity"],
-    #   "wind_speed": weather_data["data"]["values"]["windSpeed"],
-    #   "rainIntensity": weather_data["data"]["values"]["rainIntensity"],
-    # }
   except Exception as e:
     raise HTTPException(status_code=500, detail=str(e))
                     
