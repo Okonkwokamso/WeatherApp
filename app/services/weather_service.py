@@ -9,7 +9,7 @@ from typing import Any, Dict
 load_dotenv()
 
 API_KEY: str = os.getenv("TOMORROW_API_KEY", "")
-CACHE_TTL = 3600
+CACHE_TTL = 600
 print(f"API_KEY: {API_KEY}")
 
 
@@ -42,6 +42,29 @@ async def validate_city_with_geocoding(location: str) -> bool:
     return False
   
 
+def format_weather_response(location: str, weather_data: dict) -> dict:
+  values = weather_data["data"]["values"]
+  advice = []
+
+  # Example derived advice
+  if values.get("rainIntensity", 0) > 0:
+    advice.append("You might want to grab that umbrella just incase ☔")
+  if values.get("temperature", 0) > 35:
+    advice.append("Drink water, Stay sharp 😎")
+  if values.get("temperature", 0) < 10:
+    advice.append("Dress warmly or you'll get cold 🥶")
+  if values.get("windSpeed", 0) > 10:
+    advice.append("It's windy, please don't get blown away 🌬️")
+
+  return {
+    "location": location,
+    "temperature": values.get("temperature"),
+    "humidity": values.get("humidity"),
+    "wind_speed": values.get("windSpeed"),
+    "rain_intensity": values.get("rainIntensity"),
+    "advice": advice or ["No special advice."]
+  }
+
 async def get_weather(location: str, redis: Redis) -> Dict[str, Any]:
   is_valid_city = await validate_city_with_geocoding(location)
   if not is_valid_city:
@@ -53,7 +76,8 @@ async def get_weather(location: str, redis: Redis) -> Dict[str, Any]:
 
   if cached_data:
     print(f"Cache hit for {location}: {cached_data}")
-    return httpx.Response(200, content=cached_data).json()
+    weather_data = httpx.Response(200, content=cached_data).json()
+    return format_weather_response(location, weather_data)
   
   params = {
     "location": location,
@@ -89,7 +113,7 @@ async def get_weather(location: str, redis: Redis) -> Dict[str, Any]:
 
       print(f"Weather data for {location}:", weather_data)
 
-      return weather_data
+      return format_weather_response(location, weather_data)
 
   except httpx.RequestError as exc:
     print(f'Request error: {exc}')
